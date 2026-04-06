@@ -75,6 +75,7 @@ struct ClaudeInstancesView: View {
                         onChat: { openChat(session) },
                         onArchive: { archiveSession(session) },
                         onApprove: { approveSession(session) },
+                        onApproveAlways: { approveAlwaysSession(session) },
                         onReject: { rejectSession(session) }
                     )
                     .id(session.stableId)
@@ -109,6 +110,10 @@ struct ClaudeInstancesView: View {
         sessionMonitor.approvePermission(sessionId: session.sessionId)
     }
 
+    private func approveAlwaysSession(_ session: SessionState) {
+        sessionMonitor.approvePermissionAlways(sessionId: session.sessionId)
+    }
+
     private func rejectSession(_ session: SessionState) {
         sessionMonitor.denyPermission(sessionId: session.sessionId, reason: nil)
     }
@@ -126,6 +131,7 @@ struct InstanceRow: View {
     let onChat: () -> Void
     let onArchive: () -> Void
     let onApprove: () -> Void
+    let onApproveAlways: () -> Void
     let onReject: () -> Void
 
     @State private var isHovered = false
@@ -249,6 +255,7 @@ struct InstanceRow: View {
                 InlineApprovalButtons(
                     onChat: onChat,
                     onApprove: onApprove,
+                    onApproveAlways: onApproveAlways,
                     onReject: onReject
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
@@ -333,11 +340,13 @@ struct InstanceRow: View {
 struct InlineApprovalButtons: View {
     let onChat: () -> Void
     let onApprove: () -> Void
+    let onApproveAlways: () -> Void
     let onReject: () -> Void
 
     @State private var showChatButton = false
     @State private var showDenyButton = false
     @State private var showAllowButton = false
+    @State private var showAlwaysButton = false
 
     var body: some View {
         HStack(spacing: 6) {
@@ -354,7 +363,7 @@ struct InlineApprovalButtons: View {
                 Text("Deny")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.white.opacity(0.6))
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 5)
                     .background(Color.white.opacity(0.1))
                     .clipShape(Capsule())
@@ -369,7 +378,7 @@ struct InlineApprovalButtons: View {
                 Text("Allow")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.black)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 5)
                     .background(Color.white.opacity(0.9))
                     .clipShape(Capsule())
@@ -377,6 +386,21 @@ struct InlineApprovalButtons: View {
             .buttonStyle(.plain)
             .opacity(showAllowButton ? 1 : 0)
             .scaleEffect(showAllowButton ? 1 : 0.8)
+
+            Button {
+                onApproveAlways()
+            } label: {
+                Text("Always")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(Color.green.opacity(0.7))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .opacity(showAlwaysButton ? 1 : 0)
+            .scaleEffect(showAlwaysButton ? 1 : 0.8)
         }
         .onAppear {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.0)) {
@@ -387,6 +411,9 @@ struct InlineApprovalButtons: View {
             }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.1)) {
                 showAllowButton = true
+            }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.15)) {
+                showAlwaysButton = true
             }
         }
     }
